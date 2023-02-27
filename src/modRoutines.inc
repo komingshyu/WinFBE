@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -34,17 +34,28 @@ end function
 
 
 ' ========================================================================================
-' Convert embedded single quote characters to double quote within a string
-' This is used mostly for creating JSON strings.
+' Enclose JSON string (both sides) in double quotes
 ' ========================================================================================
-function qstr( byval singleQuoteString as CWSTR ) as CWSTR
-   dim as long length = len(singleQuoteString)
-   if length = 0 then return singleQuoteString
-   for i as long = 0 to length - 1
-      if singleQuoteString[i] = 39 then singleQuoteString[i] = 34
-   next
-   return singleQuoteString
+function qstr( byval wst as CWSTR ) as CWSTR
+   if len(wst) = 0 then return wst
+   dim as CWSTR stLeft = AfxStrParse(wst, 1, ":")
+   dim as CWSTR stRight = AfxStrParse(wst, 2, ":")
+   dim as CWSTR newSt = AfxStrWrap(stLeft) & ":" & AfxStrWrap(stRight)
+   return newSt
 end function
+
+' ========================================================================================
+' Enclose JSON string (left side) in double quotes
+' This is used mostly for creating JSON numbers/booleans/arrays.
+' ========================================================================================
+function qnum( byval wst as CWSTR ) as CWSTR
+   if len(wst) = 0 then return wst
+   dim as CWSTR stLeft = AfxStrParse(wst, 1, ":")
+   dim as CWSTR stRight = AfxStrParse(wst, 2, ":")
+   dim as CWSTR newSt = AfxStrWrap(stLeft) & ":" & stRight
+   return newSt
+end function
+
 
 ' ========================================================================================
 ' Get the width of the text in unscaled pixels because we feed this value
@@ -372,23 +383,26 @@ end function
 ' ========================================================================================
 ' Maps Unicode character string to a UTF-8 string.
 ' ========================================================================================
-FUNCTION UnicodeToUtf8( byval pswzUnicode as wstring ptr ) AS STRING
+FUNCTION UnicodeToUtf8( byval wzUnicode as CWSTR ) AS STRING
  dim sUtf8 AS STRING
 
- 'Maps Unicode character string to a UTF-8 string.
- sUtf8 = string(LEN(*pswzUnicode) * 2, 0)
- WideCharToMultiByte(CP_UTF8, _                 'Set to UTF-8
-                     0, _                       'Conversion type
-                     cast(LPCWSTR, pswzUnicode), _  'Unicode string to convert
-                     LEN(*pswzUnicode), _       'Length of Unicode string
-                     cast(LPSTR, STRPTR(sUtf8)), _     'UTF-8 string
-                     LEN(sUtf8), _              'Length of UTF-8 buffer
-                     BYVAL 0, _                 'Invalid character replacement
-                     BYVAL 0)                   'Replacement was used flag
- FUNCTION = rtrim(sUtf8, chr(0))
+ ' Maps Unicode character string to a UTF-8 string.
+ sUtf8 = string(len(wzUnicode) * 2, 0)
+ 
+ dim as long bytesWritten = _
+      WideCharToMultiByte ( _
+      CP_UTF8, _                        'Set to UTF-8
+      0, _                              'Conversion type
+      cast(LPCWSTR, wzUnicode.vptr), _  'Unicode string to convert
+      LEN(wzUnicode), _                 'Length of Unicode string
+      cast(LPSTR, STRPTR(sUtf8)), _     'UTF-8 string
+      LEN(sUtf8), _                     'Length of UTF-8 buffer
+      BYVAL 0, _                        'Invalid character replacement
+      BYVAL 0)                          'Replacement was used flag
+
+ FUNCTION = left(sUtf8, bytesWritten)
 
 END FUNCTION
-
 
 ' ========================================================================================
 ' Parse a string to a string array and return the number of lines.
@@ -445,27 +459,34 @@ function GetFileToString( _
    CloseHandle(hFile)
    IF bSuccess = FALSE THEN return true
 
-   ' Check for BOM signatures
-   if left(txtBuffer, 3) = chr(&HEF, &HBB, &HBF) THEN
-      ' UTF8 BOM encoded 
+   ' A JSON Design file will not have a BOM signature but it is UTF8
+   dim as CWSTR wst = wszFilename
+   if ucase(AfxStrPathName("EXTN", wst)) = ".DESIGN" then
       pDoc->FileEncoding = FILE_ENCODING_UTF8_BOM
-      txtBuffer = mid(txtBuffer, 4)   ' bypass the BOM
-   elseif left(txtBuffer, 2) = chr(&HFF, &HFE) THEN
-      ' UTF16 BOM (little endian) encoded
-      pDoc->FileEncoding = FILE_ENCODING_UTF16_BOM 
-      txtBuffer = mid(txtBuffer, 3)   ' bypass the BOM
    else
-      pDoc->FileEncoding = FILE_ENCODING_ANSI
-   END IF
-
+      ' Check for BOM signatures
+      if left(txtBuffer, 3) = chr(&HEF, &HBB, &HBF) THEN
+         ' UTF8 BOM encoded 
+         pDoc->FileEncoding = FILE_ENCODING_UTF8_BOM
+         txtBuffer = mid(txtBuffer, 4)   ' bypass the BOM
+      elseif left(txtBuffer, 2) = chr(&HFF, &HFE) THEN
+         ' UTF16 BOM (little endian) encoded
+         pDoc->FileEncoding = FILE_ENCODING_UTF16_BOM 
+         txtBuffer = mid(txtBuffer, 3)   ' bypass the BOM
+      else
+         pDoc->FileEncoding = FILE_ENCODING_ANSI
+      end if
+   end if
 
    select case pDoc->FileEncoding
       case FILE_ENCODING_ANSI 
          ' No conversion needed. clsDocument ApplyProperties will *not*
          ' set the editor to UTF8 code.
+      
       case FILE_ENCODING_UTF8_BOM   
          ' No conversion needed. clsDocument ApplyProperties will set
          ' the editor to UTF8 code.
+         
       case FILE_ENCODING_UTF16_BOM
          ' Convert the whole buffer to UTF-16 unicode string
          dim as CWSTR wszText = string(len(txtBuffer),0)
@@ -483,7 +504,7 @@ function GetFileToString( _
    end select
       
    function = false
-END FUNCTION
+end function
 
 
 ' ========================================================================================

@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ end property
 ''  Returns true/False indicating that a valid top mainmenu exists for this form.
 function clsDocument.MainMenuExists() as boolean
    dim as long numItems = (ubound(this.MenuItems) - lbound(this.MenuItems)) + 1
-   if (this.GenerateMenu = BST_CHECKED or this.GenerateMenu = true) andalso (numItems > 0) then
+   if (this.GenerateMenu = true) andalso (numItems > 0) then
       return true
    else   
       return false
@@ -151,7 +151,7 @@ end function
 ''  Returns true/False indicating that a valid top toolbar exists for this form.
 function clsDocument.ToolBarExists() as boolean
    dim as long numItems = (ubound(this.ToolBarItems) - lbound(this.ToolBarItems)) + 1
-   if (this.GenerateToolBar = BST_CHECKED or this.GenerateToolBar = true) andalso (numItems > 0) then
+   if (this.GenerateToolBar = true) andalso (numItems > 0) then
       return true
    else   
       return false
@@ -162,7 +162,7 @@ end function
 ''  Returns true/False indicating that a valid top statusbar exists for this form.
 function clsDocument.StatusBarExists() as boolean
    dim as long numItems = (ubound(this.PanelItems) - lbound(this.PanelItems)) + 1
-   if (this.GenerateStatusBar = BST_CHECKED or this.GenerateStatusBar = true) andalso (numItems > 0) then
+   if (this.GenerateStatusBar = true) andalso (numItems > 0) then
       return true
    else   
       return false
@@ -497,12 +497,12 @@ function clsDocument.LoadFormJSONdata( _
             byref JSONtext as string, _    ' this will be UTF-8 text
             byval bLoadOnly  as boolean = false _
             ) as long
-            
+
    dim pCtrl as clsControl ptr
    dim pCtrlActive as clsControl ptr
    
    dim as RECT rc
-   dim as string wst, wszPropName, wszPropValue, wszEventName
+   dim as CWSTR wst, wszPropName, wszPropValue, wszEventName
    dim as boolean bIsValidControl = true
    
    dim as long numItems
@@ -532,7 +532,7 @@ function clsDocument.LoadFormJSONdata( _
       this.CreateDesignerWindow(hWndParent)
    end if
 
-   this.wszFormVersion = json.gettext(filePtr, "version")
+   this.wszFormVersion.Utf8 = json.gettext(filePtr, "version")
    if this.wszFormVersion = "" then this.wszFormVersion = APPVERSION
          
    this.bLockControls = json.getbool(filePtr, "lockcontrols")
@@ -547,8 +547,8 @@ function clsDocument.LoadFormJSONdata( _
       itemPtr = json.arrayitem(itemsPtr, i)
       do until itemPtr = 0
          this.AllImages(i).pDoc = @this
-         this.AllImages(i).wszImageName = json.gettext(itemPtr, "imagename")
-         wst = json.gettext(itemPtr, "filename")
+         this.AllImages(i).wszImageName.Utf8 = json.gettext(itemPtr, "imagename")
+         wst.Utf8 = json.gettext(itemPtr, "filename")
          ' if this is a relative filename then convert it back.
          dim as CWSTR wszImageFilename = ProcessFromCurdriveProject(wst)
          if AfxPathIsRelative(wszImageFilename) then 
@@ -556,7 +556,7 @@ function clsDocument.LoadFormJSONdata( _
          end if
          this.AllImages(i).wszFileName = wszImageFilename
          
-         this.AllImages(i).wszFormat = json.gettext(itemPtr, "resourcetype")
+         this.AllImages(i).wszFormat.Utf8 = json.gettext(itemPtr, "resourcetype")
          i += 1
          itemPtr = itemPtr->next
       loop   
@@ -564,82 +564,88 @@ function clsDocument.LoadFormJSONdata( _
 
    ' Retrieve data related to MAINMENU 
    keyPtr = json.getptr(filePtr, "mainmenu")
-   this.GenerateMenu = json.getbool(keyPtr, "display")
-   itemsPtr = json.getptr(keyPtr, "items")
-   numItems = json.arraycount(itemsPtr)
-   if numItems then
-      redim preserve this.MenuItems(numItems - 1)
-      dim as long i = 0
-      itemPtr = json.arrayitem(itemsPtr, i)
-      do until itemPtr = 0
-         dim as string wszName = json.gettext(itemPtr, "name")
-         if len(rtrim(wszName)) > 0 then 
-            this.MenuItems(i).wszName = wszName
-            this.MenuItems(i).wszCaption = json.gettext(itemPtr, "caption")
-            this.MenuItems(i).nIndent = json.getnumber(itemPtr, "indent") 
-            this.MenuItems(i).chkAlt = json.getnumber(itemPtr, "alt")
-            this.MenuItems(i).chkShift = json.getnumber(itemPtr, "shift")
-            this.MenuItems(i).chkCtrl = json.getnumber(itemPtr, "ctrl")
-            this.MenuItems(i).wszShortcut = json.gettext(itemPtr, "shortcut")
-            this.MenuItems(i).chkChecked = json.getnumber(itemPtr, "checked")
-            this.MenuItems(i).chkGrayed = json.getnumber(itemPtr, "grayed")
-            i += 1
-         end if   
-         itemPtr = itemPtr->next
-      loop
+   if keyPtr then
+      this.GenerateMenu = json.getbool(keyPtr, "display")
+      itemsPtr = json.getptr(keyPtr, "items")
+      numItems = json.arraycount(itemsPtr)
+      if numItems then
+         redim preserve this.MenuItems(numItems - 1)
+         dim as long i = 0
+         itemPtr = json.arrayitem(itemsPtr, i)
+         do until itemPtr = 0
+            dim as CWSTR wszName
+            wszName.Utf8 = json.gettext(itemPtr, "name")
+            if len(rtrim(wszName)) > 0 then 
+               this.MenuItems(i).wszName = wszName
+               this.MenuItems(i).wszCaption.Utf8 = json.gettext(itemPtr, "caption")
+               this.MenuItems(i).nIndent = json.getnumber(itemPtr, "indent") 
+               this.MenuItems(i).chkAlt = json.getnumber(itemPtr, "alt")
+               this.MenuItems(i).chkShift = json.getnumber(itemPtr, "shift")
+               this.MenuItems(i).chkCtrl = json.getnumber(itemPtr, "ctrl")
+               this.MenuItems(i).wszShortcut.Utf8 = json.gettext(itemPtr, "shortcut")
+               this.MenuItems(i).chkChecked = json.getnumber(itemPtr, "checked")
+               this.MenuItems(i).chkGrayed = json.getnumber(itemPtr, "grayed")
+               i += 1
+            end if   
+            itemPtr = itemPtr->next
+         loop
+      end if
    end if
-
+   
    ' Retrieve data related to STATUSBAR
    keyPtr = json.getptr(filePtr, "statusbar")
-   this.GenerateStatusBar = json.getbool(keyPtr, "display")
-   itemsPtr = json.getptr(keyPtr, "items")
-   numItems = json.arraycount(itemsPtr)
-   if numItems then
-      redim preserve this.PanelItems(numItems - 1)
-      dim as long i = 0
-      itemPtr = json.arrayitem(itemsPtr, i)
-      do until itemPtr = 0
-         this.PanelItems(i).wszName = json.gettext(itemPtr, "name") 
-         this.PanelItems(i).wszText = json.gettext(itemPtr, "text")
-         this.PanelItems(i).wszTooltip = json.gettext(itemPtr, "tooltip")
-         this.PanelItems(i).wszAlignment = json.gettext(itemPtr, "alignment")
-         this.PanelItems(i).wszAutoSize = json.gettext(itemPtr, "autosize")
-         this.PanelItems(i).wszWidth = json.gettext(itemPtr, "width")
-         this.PanelItems(i).wszMinWidth = json.gettext(itemPtr, "minwidth")
-         this.PanelItems(i).pProp.wszPropValue = json.gettext(itemPtr, "image")
-         this.PanelItems(i).wszBackColor = json.gettext(itemPtr, "backcolor")
-         this.PanelItems(i).wszBackColorHot = json.gettext(itemPtr, "backcolorhot")
-         this.PanelItems(i).wszForeColor = json.gettext(itemPtr, "forecolor")
-         this.PanelItems(i).wszForeColorHot = json.gettext(itemPtr, "forecolorhot")
-         ' BorderStyle is deprecated as of v2.0.4 as it has no effect
-         ' in WinFBE programs where Windows Themes are enabled.
-         i += 1
-         itemPtr = itemPtr->next
-      loop
+   if keyPtr then
+      this.GenerateStatusBar = json.getbool(keyPtr, "display")
+      itemsPtr = json.getptr(keyPtr, "items")
+      numItems = json.arraycount(itemsPtr)
+      if numItems then
+         redim preserve this.PanelItems(numItems - 1)
+         dim as long i = 0
+         itemPtr = json.arrayitem(itemsPtr, i)
+         do until itemPtr = 0
+            this.PanelItems(i).wszName.Utf8 = json.gettext(itemPtr, "name") 
+            this.PanelItems(i).wszText.Utf8 = json.gettext(itemPtr, "text")
+            this.PanelItems(i).wszTooltip.Utf8 = json.gettext(itemPtr, "tooltip")
+            this.PanelItems(i).wszAlignment.Utf8 = json.gettext(itemPtr, "alignment")
+            this.PanelItems(i).wszAutoSize.Utf8 = json.gettext(itemPtr, "autosize")
+            this.PanelItems(i).wszWidth.Utf8 = json.gettext(itemPtr, "width")
+            this.PanelItems(i).wszMinWidth.Utf8 = json.gettext(itemPtr, "minwidth")
+            this.PanelItems(i).pProp.wszPropValue.Utf8 = json.gettext(itemPtr, "image")
+            this.PanelItems(i).wszBackColor.Utf8 = json.gettext(itemPtr, "backcolor")
+            this.PanelItems(i).wszBackColorHot.Utf8 = json.gettext(itemPtr, "backcolorhot")
+            this.PanelItems(i).wszForeColor.Utf8 = json.gettext(itemPtr, "forecolor")
+            this.PanelItems(i).wszForeColorHot.Utf8 = json.gettext(itemPtr, "forecolorhot")
+            ' BorderStyle is deprecated as of v2.0.4 as it has no effect
+            ' in WinFBE programs where Windows Themes are enabled.
+            i += 1
+            itemPtr = itemPtr->next
+         loop
+      end if
    end if
-
+   
    ' Retrieve data related to TOOLBAR
    keyPtr = json.getptr(filePtr, "toolbar")
-   this.GenerateToolbar = json.getbool(keyPtr, "display")
-   this.wszToolBarSize = json.gettext(keyPtr, "size")
-   itemsPtr = json.getptr(keyPtr, "items")
-   numItems = json.arraycount(itemsPtr)
-   if numItems then
-      redim preserve this.ToolBarItems(numItems - 1)
-      dim as long i = 0
-      itemPtr = json.arrayitem(itemsPtr, i)
-      do until itemPtr = 0
-         this.ToolBarItems(i).wszName = json.gettext(itemPtr, "name") 
-         this.ToolBarItems(i).wszButtonType = json.gettext(itemPtr, "type")
-         this.ToolBarItems(i).wszTooltip = json.gettext(itemPtr, "tooltip")
-         this.ToolBarItems(i).pPropNormalImage.wszPropValue = json.gettext(itemPtr, "normalimage")
-         this.ToolBarItems(i).pPropHotImage.wszPropValue = json.gettext(itemPtr, "hotimage")
-         this.ToolBarItems(i).pPropDisabledImage.wszPropValue = json.gettext(itemPtr, "disabledimage")
-         i += 1
-         itemPtr = itemPtr->next
-      loop
+   if keyPtr then
+      this.GenerateToolbar = json.getbool(keyPtr, "display")
+      this.wszToolBarSize.Utf8 = json.gettext(keyPtr, "size")
+      itemsPtr = json.getptr(keyPtr, "items")
+      numItems = json.arraycount(itemsPtr)
+      if numItems then
+         redim preserve this.ToolBarItems(numItems - 1)
+         dim as long i = 0
+         itemPtr = json.arrayitem(itemsPtr, i)
+         do until itemPtr = 0
+            this.ToolBarItems(i).wszName.Utf8 = json.gettext(itemPtr, "name") 
+            this.ToolBarItems(i).wszButtonType.Utf8 = json.gettext(itemPtr, "type")
+            this.ToolBarItems(i).wszTooltip.Utf8 = json.gettext(itemPtr, "tooltip")
+            this.ToolBarItems(i).pPropNormalImage.wszPropValue.Utf8 = json.gettext(itemPtr, "normalimage")
+            this.ToolBarItems(i).pPropHotImage.wszPropValue.Utf8 = json.gettext(itemPtr, "hotimage")
+            this.ToolBarItems(i).pPropDisabledImage.wszPropValue.Utf8 = json.gettext(itemPtr, "disabledimage")
+            i += 1
+            itemPtr = itemPtr->next
+         loop
+      end if
    end if
-
 
    ctrlsPtr = json.getptr(filePtr, "controls")
    dim as long numControls = json.arraycount(ctrlsPtr)
@@ -649,7 +655,7 @@ function clsDocument.LoadFormJSONdata( _
 
       ctrlPtr = json.arrayitem(ctrlsPtr, 0)
       do until ctrlPtr = 0
-         wszControlType = json.gettext(ctrlPtr, "type") 
+         wszControlType.Utf8 = json.gettext(ctrlPtr, "type") 
          nControlType = GetControlType( wszControlType)
 
          ' Control Start
@@ -673,8 +679,8 @@ function clsDocument.LoadFormJSONdata( _
          if numProps then
             propPtr = json.arrayitem(propsPtr, 0)
             do until propPtr = 0
-               wszPropName = json.gettext(propPtr, "name")
-               wszPropValue = json.gettext(propPtr, "value")
+               wszPropName.Utf8 = json.gettext(propPtr, "name")
+               wszPropValue.Utf8 = json.gettext(propPtr, "value")
                ' Only set the loading property if it exists in the current property
                ' listing. We do this otherwise older now unused properties will continue
                ' to get loaded when we no longer want them to.
@@ -690,7 +696,7 @@ function clsDocument.LoadFormJSONdata( _
          if numEvents then
             eventPtr = json.arrayitem(eventsPtr, 0)
             do until eventPtr = 0
-               wszEventName = json.gettext(eventPtr, "name")
+               wszEventName.Utf8 = json.gettext(eventPtr, "name")
                SetControlEvent( pCtrl, wszEventName, true )
                eventPtr = eventPtr->next
             loop
@@ -984,24 +990,21 @@ end function
 function clsDocument.SaveFormJSONdata() as boolean
    if this.IsDesigner = false then return true
    
-   dim pStream as CTextStream  
-   if pStream.Create(this.DesignerFilename, true, false) <> S_OK then return true   ' error
-
    dim pCtrl as clsControl ptr
    dim as CWSTR wst 
    dim as CWSTR wcomma = ","
    
    wst = _
-   qstr("'form':true")        & wcomma & _
-   qstr("'version':'3.0.2'")  & wcomma & _
-   qstr("'lockcontrols':"     & iif(this.bLockControls, "true", "false")) & wcomma & _
-   qstr("'snaplines':"        & iif(this.bSnapLines, "true", "false")) 
+   qnum("form:true")      & wcomma & _
+   qstr("version:3.0.2")  & wcomma & _
+   qnum("lockcontrols:"   & iif(this.bLockControls, "true", "false")) & wcomma & _
+   qnum("snaplines:"      & iif(this.bSnapLines, "true", "false")) 
 
    ' Save Images(if applicable)
    dim as long numImageItems = ubound(this.AllImages) - lbound(this.AllImages) + 1
    if numImageItems > 0 then
       wst = wst & wcomma & _
-      qstr("'images': [")
+      qnum("images: [")
       for ii as long = lbound(this.AllImages) to ubound(this.AllImages)
          dim as CWSTR wszRelative
          dim as CWSTR wszImageFilename = this.AllImages(ii).wszFilename
@@ -1014,9 +1017,9 @@ function clsDocument.SaveFormJSONdata() as boolean
          
          wst = wst & _
          "{" & _
-         qstr("'imagename':'"        & this.AllImages(ii).wszImageName & "'") & wcomma & _ 
-         qstr("'filename':'"         & AfxStrReplace(ProcessToCurdriveProject(wszImageFilename), "\", "\\") & "'") & wcomma & _ 
-         qstr("'resourcetype':'"     & this.AllImages(ii).wszFormat & "'") & _ 
+         qstr("imagename:"        & this.AllImages(ii).wszImageName) & wcomma & _ 
+         qstr("filename:"         & AfxStrReplace(ProcessToCurdriveProject(wszImageFilename), "\", "\\")) & wcomma & _ 
+         qstr("resourcetype:"     & this.AllImages(ii).wszFormat) & _ 
          "},"
       next
       wst = rtrim(wst, ",") & "]"
@@ -1026,26 +1029,26 @@ function clsDocument.SaveFormJSONdata() as boolean
    dim as long numMenuItems = ubound(this.MenuItems) - lbound(this.MenuItems) + 1
    if numMenuItems > 0 then
       wst = wst & wcomma & _
-      qstr("'mainmenu':{") & _
-      qstr("'display':" & iif(this.GenerateMenu, "true", "false")) & wcomma 
+      qnum("mainmenu:{") & _
+      qnum("display:" & iif(this.GenerateMenu, "true", "false")) & wcomma 
 
       wst = wst & _
-      qstr("'items': [")
+      qnum("items: [")
       for ii as long = lbound(this.MenuItems) to ubound(this.MenuItems)
          ' Skip any "blank" lines that may have been added from the Menu Editor
          if rtrim(this.MenuItems(ii).wszName) = "" then continue for
          
          wst = wst & _
          "{" & _
-         qstr("'name':'"     & this.MenuItems(ii).wszName & "'") & wcomma & _
-         qstr("'caption':'"  & this.MenuItems(ii).wszCaption & "'") & wcomma & _
-         qstr("'indent':"    & this.MenuItems(ii).nIndent) & wcomma & _
-         qstr("'alt':"       & this.MenuItems(ii).chkAlt) & wcomma & _
-         qstr("'shift':"     & this.MenuItems(ii).chkShift) & wcomma & _
-         qstr("'ctrl':"      & this.MenuItems(ii).chkCtrl) & wcomma & _
-         qstr("'shortcut':'" & this.MenuItems(ii).wszShortcut & "'") & wcomma & _
-         qstr("'checked':"   & this.MenuItems(ii).chkChecked) & wcomma & _
-         qstr("'grayed':"    & this.MenuItems(ii).chkGrayed) & _
+         qstr("name:"      & this.MenuItems(ii).wszName) & wcomma & _
+         qstr("caption:"   & this.MenuItems(ii).wszCaption) & wcomma & _
+         qnum("indent:"    & this.MenuItems(ii).nIndent) & wcomma & _
+         qnum("alt:"       & this.MenuItems(ii).chkAlt) & wcomma & _
+         qnum("shift:"     & this.MenuItems(ii).chkShift) & wcomma & _
+         qnum("ctrl:"      & this.MenuItems(ii).chkCtrl) & wcomma & _
+         qstr("shortcut:"  & this.MenuItems(ii).wszShortcut) & wcomma & _
+         qnum("checked:"   & this.MenuItems(ii).chkChecked) & wcomma & _
+         qnum("grayed:"    & this.MenuItems(ii).chkGrayed) & _
          "}," 
       next
       wst = rtrim(wst, ",") & "]}"
@@ -1055,21 +1058,21 @@ function clsDocument.SaveFormJSONdata() as boolean
    dim as long numToolBarItems = Ubound(this.ToolBarItems) - lbound(this.ToolBarItems) + 1
    if numToolBarItems > 0 then
       wst = wst & wcomma & _
-      qstr("'toolbar':{") & _
-      qstr("'display':" & iif(this.GenerateToolBar, "true", "false")) & wcomma & _
-      qstr("'size':'" & this.wszToolBarSize & "'") & wcomma 
+      qnum("toolbar:{") & _
+      qnum("display:" & iif(this.GenerateToolBar, "true", "false")) & wcomma & _
+      qstr("size:" & this.wszToolBarSize) & wcomma 
 
       wst = wst & _
-      qstr("'items': [")
+      qnum("items: [")
       for ii as long = lbound(this.ToolBarItems) to ubound(this.ToolBarItems)
          wst = wst & _
          "{" & _
-         qstr("'name':'"           & this.ToolBarItems(ii).wszName & "'") & wcomma & _
-         qstr("'type':'"           & this.ToolBarItems(ii).wszButtonType & "'") & wcomma & _
-         qstr("'tooltip':'"        & this.ToolBarItems(ii).wszTooltip & "'") & wcomma & _
-         qstr("'hotimage':'"       & this.ToolBarItems(ii).pPropHotImage.wszPropValue & "'") & wcomma & _
-         qstr("'normalimage':'"    & this.ToolBarItems(ii).pPropNormalImage.wszPropValue & "'") & wcomma & _
-         qstr("'disabledimage':'"  & this.ToolBarItems(ii).pPropDisabledImage.wszPropValue & "'") & _
+         qstr("name:"           & this.ToolBarItems(ii).wszName) & wcomma & _
+         qstr("type:"           & this.ToolBarItems(ii).wszButtonType) & wcomma & _
+         qstr("tooltip:"        & this.ToolBarItems(ii).wszTooltip) & wcomma & _
+         qstr("hotimage:"       & this.ToolBarItems(ii).pPropHotImage.wszPropValue) & wcomma & _
+         qstr("normalimage:"    & this.ToolBarItems(ii).pPropNormalImage.wszPropValue) & wcomma & _
+         qstr("disabledimage:"  & this.ToolBarItems(ii).pPropDisabledImage.wszPropValue) & _
          "}," 
       next
       wst = rtrim(wst, ",") & "]}"
@@ -1080,26 +1083,26 @@ function clsDocument.SaveFormJSONdata() as boolean
    dim as long numPanelItems = Ubound(this.PanelItems) - lbound(this.PanelItems) + 1
    if numPanelItems > 0 then
       wst = wst & wcomma & _
-      qstr("'statusbar':{") & _
-      qstr("'display':" & iif(this.GenerateStatusBar, "true", "false")) & wcomma 
+      qnum("statusbar:{") & _
+      qnum("display:" & iif(this.GenerateStatusBar, "true", "false")) & wcomma 
 
       wst = wst & _
-      qstr("'items': [")
+      qnum("items: [")
       for ii as long = lbound(this.PanelItems) to ubound(this.PanelItems)
          wst = wst & _
          "{" & _
-         qstr("'name':'"           & this.PanelItems(ii).wszName & "'") & wcomma & _
-         qstr("'text':'"           & this.PanelItems(ii).wszText & "'") & wcomma & _
-         qstr("'tooltip':'"        & this.PanelItems(ii).wszTooltip & "'") & wcomma & _
-         qstr("'alignment':'"      & this.PanelItems(ii).wszAlignment & "'") & wcomma & _
-         qstr("'autosize':'"       & this.PanelItems(ii).wszAutoSize & "'") & wcomma & _
-         qstr("'width':'"          & this.PanelItems(ii).wszWidth & "'") & wcomma & _
-         qstr("'minwidth':'"       & this.PanelItems(ii).wszMinWidth & "'") & wcomma & _
-         qstr("'image':'"          & this.PanelItems(ii).pProp.wszPropValue & "'") & wcomma & _
-         qstr("'backcolor':'"      & this.PanelItems(ii).wszBackColor & "'") & wcomma & _
-         qstr("'backcolorhot':'"   & this.PanelItems(ii).wszBackColorHot & "'") & wcomma & _
-         qstr("'forecolor':'"      & this.PanelItems(ii).wszForeColor & "'") & wcomma & _
-         qstr("'forecolorhot':'"   & this.PanelItems(ii).wszForeColorHot & "'") & _
+         qstr("name:"           & this.PanelItems(ii).wszName) & wcomma & _
+         qstr("text:"           & this.PanelItems(ii).wszText) & wcomma & _
+         qstr("tooltip:"        & this.PanelItems(ii).wszTooltip) & wcomma & _
+         qstr("alignment:"      & this.PanelItems(ii).wszAlignment) & wcomma & _
+         qstr("autosize:"       & this.PanelItems(ii).wszAutoSize) & wcomma & _
+         qstr("width:"          & this.PanelItems(ii).wszWidth) & wcomma & _
+         qstr("minwidth:"       & this.PanelItems(ii).wszMinWidth) & wcomma & _
+         qstr("image:"          & this.PanelItems(ii).pProp.wszPropValue) & wcomma & _
+         qstr("backcolor:"      & this.PanelItems(ii).wszBackColor) & wcomma & _
+         qstr("backcolorhot:"   & this.PanelItems(ii).wszBackColorHot) & wcomma & _
+         qstr("forecolor:"      & this.PanelItems(ii).wszForeColor) & wcomma & _
+         qstr("forecolorhot:"   & this.PanelItems(ii).wszForeColorHot) & _
          "}," 
               ' BorderStyle is deprecated as of v2.0.4 as it has no effect
               ' in WinFBE programs where Windows Themes are enabled.
@@ -1112,7 +1115,7 @@ function clsDocument.SaveFormJSONdata() as boolean
    ' Iterate all of the controls on the form
    if this.Controls.Count then
       wst = wst & wcomma & _
-      qstr("'controls':[") 
+      qnum("controls:[") 
             
       ' We want to ensure that we output code for the Form first because
       ' when the form is loaded the controls need to attach themselves
@@ -1132,25 +1135,25 @@ function clsDocument.SaveFormJSONdata() as boolean
 
                wst = wst & _
                "{" & _
-               qstr("'type':'" & GetToolBoxName(pCtrl->ControlType) & "'") & wcomma & _
-               qstr("'properties': [") 
+               qstr("type:" & GetToolBoxName(pCtrl->ControlType)) & wcomma & _
+               qnum("properties: [") 
 
                for ii as long = lbound(pCtrl->Properties) to ubound(pCtrl->Properties)
                   wst = wst & "{" & _
-                  qstr("'name':'" & pCtrl->Properties(ii).wszPropName & "'") & wcomma & _
-                  qstr("'value':'" & pCtrl->Properties(ii).wszPropValue & "'") & _
+                  qstr("name:" & pCtrl->Properties(ii).wszPropName) & wcomma & _
+                  qstr("value:" & pCtrl->Properties(ii).wszPropValue) & _
                   "},"
                next
                
                wst = rtrim(wst, ",") & "]," & _
-               qstr("'events': [") 
+               qnum("events: [") 
 
                for ii as long = lbound(pCtrl->Events) to ubound(pCtrl->Events)
                   ' Only need to output the names of the Events that have been ticked as being in use.
                   if pCtrl->Events(ii).bIsSelected then
                      if rtrim(pCtrl->Events(ii).wszEventName) > "" then
                         wst = wst & "{" & _
-                        qstr("'name':'" & pCtrl->Events(ii).wszEventName & "'") & _
+                        qstr("name:" & pCtrl->Events(ii).wszEventName) & _
                         "},"
                      end if   
                   end if   
@@ -1170,9 +1173,28 @@ function clsDocument.SaveFormJSONdata() as boolean
 
    ' Convert UTF-16 to UTF-8 encoding
    wst = "{" & wst & "}"
-   pStream.WriteLine( UnicodeToUtf8(wst) )
-   pStream.Close
 
+'   dim pStream as CTextStream  
+'   if pStream.Create(this.DesignerFilename, true, false) <> S_OK then return true   ' error
+'   pStream.WriteLine( UnicodeToUtf8(wst) )
+'   pStream.Close
+
+   ' Per email from "Allan" on Jan 14, 2023, changes I made to UnicodeToUtf8
+   ' function (eliminating the ending Trim(0), and use BytesWritten instead) seems to be
+   ' the reason for the Chinese characters now writing 100% correctly.
+   ' Use the native FreeBasic file handling commands to save the data to disk. This is a test
+   ' to see if the CTextStream approach is somehow causing problems with the UTF-8 output. Allan
+   ' is still experiencing on his computer whereas I am not. Everything seems to work correctly
+   ' on my side. 2023-01-27, Allan confirmed that using the native FB file operations has
+   ' corrected his issue with garbled Chinese characters.
+   dim as long f = freefile
+   if open (this.DesignerFilename for output as #f) = 0 then
+      print #f, UnicodeToUtf8(wst)
+      close #f
+   else
+      return true   ' error
+   end if
+   
    function = false
 end function
 
@@ -1493,7 +1515,7 @@ function clsDocument.GetLine( byval nLine as long ) as string
    if nLen < 1 then exit function
    buffer = space(nLen)
    SciMsg( pSci, SCI_GETLINE, nLine, cast(LPARAM, strptr(buffer)))
-   function = rtrim(buffer, any chr(13,10,0))
+   function = rtrim(buffer, any chr(13,10))
 end function
 
 ''
@@ -1518,7 +1540,7 @@ function clsDocument.GetSelText() as string
    if nLen < 1 then exit function
    buffer = space(nLen)
    SciMsg( pSci, SCI_GETSELTEXT, 0, cast(LPARAM, strptr(buffer)))
-   function = trim(buffer, chr(0))
+   function = buffer
 end function
 
 ''
@@ -1531,7 +1553,7 @@ function clsDocument.GetText() as string
    if nLen < 1 then exit function
    buffer = space(nLen+1)
    SciMsg( pSci, SCI_GETTEXT, nLen+1, cast(LPARAM, strptr(buffer)) )
-   function = trim(buffer, chr(0))
+   function = buffer
 end function
 
 ''
@@ -2343,7 +2365,6 @@ function clsDocument.ApplyProperties() as long
       '' RIGHT EDGE COLUMN
       SciMsg( m_pSci(i), SCI_SETEDGEMODE, iif(gConfig.RightEdge, EDGE_LINE, EDGE_NONE), 0 )
       SciMsg( m_pSci(i), SCI_SETEDGECOLUMN, val(gConfig.RightEdgePosition), 0 )
-      'SciMsg( m_pSci, SCI_SETEDGECOLOR, iif(gConfig.RightEdge, EDGE_LINE, EDGE_NONE) )
 
       ''
       ''  OTHER
@@ -2440,7 +2461,7 @@ function clsDocument.ApplyProperties() as long
 
          end if
       end if
-
+  
       ''
       ''  CODE FOLDING
       if gConfig.FoldMargin then

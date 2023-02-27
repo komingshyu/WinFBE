@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -487,7 +487,8 @@ private Function frmToolBarEditor_OnCommand( ByVal HWnd As HWnd, _
                end if
                ' Save the value indicating that we want the toolbar to display in
                ' the generated code for the form.
-               pDoc->GenerateToolBar = Button_GetCheck( GetDlgItem(HWND, IDC_FRMTOOLBAREDITOR_CHKDISPLAYONFORM) )
+               pDoc->GenerateToolBar = _
+                  iif(Button_GetCheck(GetDlgItem(HWND, IDC_FRMTOOLBAREDITOR_CHKDISPLAYONFORM)) = BST_CHECKED, true, false)
                
                dim as long nIndex = ComboBox_GetCurSel( GetDlgItem(HWND, IDC_FRMTOOLBAREDITOR_COMBOSIZE) )
                pDoc->wszToolBarSize = AfxGetComboBoxText( GetDlgItem(HWND, IDC_FRMTOOLBAREDITOR_COMBOSIZE), nIndex )
@@ -695,7 +696,7 @@ public Function frmToolBarEditor_Show( ByVal hWndParent As HWnd ) as LRESULT
    Dim pDoc As clsDocument Ptr = gTTabCtl.GetActiveDocumentPtr()
    If pDoc Then 
       hCtrl = GetDlgItem( hForm, IDC_FRMTOOLBAREDITOR_CHKDISPLAYONFORM ) 
-      Button_SetCheck( hCtrl, pDoc->GenerateToolBar )
+      Button_SetCheck( hCtrl, iif(pDoc->GenerateToolBar, BST_CHECKED, BST_UNCHECKED))
       dim as long numItems = ubound(pDoc->ToolBarItems)
       if numItems > -1 then
          redim gToolBarItems(numItems)

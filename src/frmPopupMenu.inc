@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ end function
 ' clicks somewhere away from the menu.
 ' ========================================================================================
 function killPopupMenus() as boolean
-   if IsWindow(HWND_MENU(0)) then 
+   if HWND_MENU(0) then 
       DestroyWindow(HWND_MENU(0))
       HWND_MENU(0) = 0
       return true
@@ -73,7 +73,7 @@ function killPopupMenus() as boolean
 end function
 
 function killPopupSubMenus() as boolean
-   if IsWindow(HWND_MENU(1)) then 
+   if HWND_MENU(1) then 
       DestroyWindow(HWND_MENU(1))
       HWND_MENU(1) = 0
       return true
@@ -88,7 +88,7 @@ function killAllPopupMenus() as boolean
    ' unhighlight any previous hot menubar button
    dim as HWND hCtrl = ghWndActiveMenuBarButton
    ghWndActiveMenuBarButton = 0
-   AfxRedrawWindow(hCtrl)
+   if hCtrl then AfxRedrawWindow(hCtrl)
    return true
 end function
 

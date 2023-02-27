@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -770,7 +770,7 @@ function frmMain_PositionWindows() as LRESULT
    dim as HWnd hEdit
    dim as long nHeightTabControl, nLeft, nTop
    dim as Rect rc
-   
+
    dim pWindow as CWindow ptr = AfxCWindowPtr( HWND_FRMMAIN )
    if pWindow = 0 then exit function
    
@@ -1611,7 +1611,7 @@ end function
 
 
 ' ========================================================================================
-' Process WM_LBUTTONDOWN message for window/dialog: frmMain
+' Process WM_LBUTTONDBLCLK message for window/dialog: frmMain
 ' ========================================================================================
 function frmMain_OnLButtonDblClk( _
             byval HWnd as HWnd, _
@@ -1940,7 +1940,7 @@ function frmMain_Show( byval hWndParent as HWnd ) as LRESULT
    ghIconTick   = LoadImage( pWindow->InstanceHandle, "IMAGE_TICK", IMAGE_ICON, cx, cx, LR_DEFAULTCOLOR )
    ghIconNoTick = LoadImage( pWindow->InstanceHandle, "IMAGE_NOTICK", IMAGE_ICON, cx, cx, LR_DEFAULTCOLOR )
 
-   ' Load the North/Southand East/West cursor images
+   ' Load the North/South and East/West cursor images
    ghCursorSizeNS = LoadImage( Null, MAKEINTRESOURCEW(OCR_SIZENS), IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE or LR_SHARED )
    ghCursorSizeWE = LoadImage( Null, MAKEINTRESOURCEW(OCR_SIZEWE), IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE or LR_SHARED )
 
@@ -2012,7 +2012,7 @@ function frmMain_Show( byval hWndParent as HWnd ) as LRESULT
    ' Post a message to do an update check (if applicable)
    PostMessage( pWindow->hWindow, MSG_USER_PROCESS_UPDATECHECK, 0, 0 )
 
-   ' Start AutoSave timer if that option is enables
+   ' Start AutoSave timer if that option is enabled
    OnCommand_FileAutoSaveStartTimer()
 
    ' Process windows events

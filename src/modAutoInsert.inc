@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -30,6 +30,13 @@ private function CanCompleteBlockStatement( byval pDoc as clsDocument ptr, _
                                             ) as boolean
    
    If gConfig.AutoComplete = false Then return false
+   
+   '// January 15, 2023. Default to return True always thereby bypassing the logic
+   '// of this function. Rather than "smartly" trying to determine if a matching end
+   '// keyword exists, we will simply honor the user's wishes and insert the completion
+   '// keywords.
+   return true
+   
    
    dim as long NumLines, nLenMatch
    dim as string sStartMatch, sEndMatch, sLine

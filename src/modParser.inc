@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -419,7 +419,9 @@ function ctxParser.ParseFunction( byval action as PARSEACTION ) as boolean
    ' Get next token (left parenthesis but is optional for sub/function)
    do until this.GetToken() = false
       if this.EOL then 
-         if action = PARSINGACTION.PARSE_SUB then
+         if (action = PARSINGACTION.PARSE_SUB) orelse _
+            (action = PARSINGACTION.PARSE_CONSTRUCTOR) orelse _
+            (action = PARSINGACTION.PARSE_DESTRUCTOR) then
             exit do  ' only for Sub b/c for Function we haven't encountered AS RETURN_TYPE yet
          else
             ' Functions/Properties   

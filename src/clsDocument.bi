@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General public License as published by
@@ -110,9 +110,9 @@ type clsDocument
       PanelItems(any)   as clsPanelItem
       Controls          as clsCollection
       AllImages(any)    as IMAGES_TYPE     ' All Images belonging to the Form
-      GenerateMenu      as long = BST_CHECKED  ' Indicates to generate code for the menu
-      GenerateToolBar   as long = BST_CHECKED  ' Indicates to generate code for the menu
-      GenerateStatusBar as long = BST_CHECKED  ' Indicates to generate code for the statusbar
+      GenerateMenu      as boolean = true  ' Indicates to generate code for the menu
+      GenerateToolBar   as boolean = true  ' Indicates to generate code for the menu
+      GenerateStatusBar as boolean = true  ' Indicates to generate code for the statusbar
       hWndDesigner      as HWnd            ' DesignMain window (switch to this window when in design mode (versus code mode)
       DesignTabsCurSel  as long 
       initialCtrlID     as long            ' The starting CtrlID to use for this form and all controls on it.

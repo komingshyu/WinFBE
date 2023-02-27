@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -222,8 +222,8 @@ Function OnCommand_ProjectNew( ByVal HWnd As HWnd ) As LRESULT
                gApp.ProjectBuild = gConfig.Builds(i).id
                exit for
             end if
-         NEXT
-
+         next
+         
              
       case IDC_FRMPROJECTOPTIONS_OPTCONSOLE
          pDoc = OnCommand_FileNew(HWND_FRMMAIN)
@@ -261,7 +261,6 @@ Function OnCommand_ProjectNew( ByVal HWnd As HWnd ) As LRESULT
             end if
          NEXT
       
-
 
       case IDC_FRMPROJECTOPTIONS_OPTDLL
          ' Change the Build Configuration to match the first "DLL" type of entry.
@@ -344,10 +343,10 @@ Function OnCommand_ProjectNew( ByVal HWnd As HWnd ) As LRESULT
                gApp.ProjectBuild = gConfig.Builds(i).id
                exit for
             end if
-         NEXT
+         next
 
       end select
-      
+       
       
       select case gApp.NewProjectTemplateType
       case IDC_FRMPROJECTOPTIONS_OPTDLL, IDC_FRMPROJECTOPTIONS_OPTSTATIC   
@@ -384,6 +383,10 @@ Function OnCommand_ProjectNew( ByVal HWnd As HWnd ) As LRESULT
    frmExplorer_PositionWindows
    frmMain_PositionWindows
    
+   ' Refresh the Project Explorer file name list
+   LoadExplorerFiles()
+   LoadFunctionsFiles()
+
    ' This will update the main window to show the project name in the window caption
    frmMain_SetFocusToCurrentCodeWindow
    
