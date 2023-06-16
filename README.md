@@ -1,9 +1,13 @@
 # WinFBE
+[![Release](https://img.shields.io/github/v/release/PaulSquires/WinFBE?style=flat-square)](https://github.com/PaulSquires/IB-Tracker/releases)
+![Downloads](https://img.shields.io/github/downloads/PaulSquires/WinFBE/total?style=flat-square)
+[![License](https://img.shields.io/github/license/PaulSquires/WinFBE?style=flat-square)](LICENSE)
+
 FreeBASIC Editor for Windows
 
 Code is written using the FreeBASIC language and uses the Scintilla editing library (in DLL form).
 
-The WinFBE Suite package (attached to each release as a compressed RAR file), is an all-in-one package including the latest WinFBE editor, FreeBASIC compiler (32 and 64 bit compilers), Jose Roca's WinFBX library, several Help files and all necessary Include files.
+The WinFBE Suite package (attached to each release as a compressed ZIP file), is an all-in-one package including the latest WinFBE editor, FreeBASIC compiler (32 and 64 bit compilers), Jose Roca's WinFBX library, several Help files and all necessary Include files.
 
 Features:
 
@@ -30,7 +34,7 @@ Resources:
 - Visit http://www.planetsquires.com/protect/forum/index.php for support forum.
 
 WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-Copyright (C) 2016-2022 Paul Squires, PlanetSquires Software
+Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
 
 The WinFBE editor is licensed under the GNU GPLv3 or later.
 
