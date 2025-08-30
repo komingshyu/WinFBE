@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2025 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -17,3 +17,4 @@
 #Define IDC_FRMCOMMANDLINE_TEXTBOX1                 1001
 
 declare Function frmCommandLine_Show( ByVal hWndParent As HWnd ) as LRESULT
+' this is a new line of text

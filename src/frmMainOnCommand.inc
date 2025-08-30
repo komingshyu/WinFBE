@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2025 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -232,7 +232,11 @@ Function frmMain_OnCommand( _
       Case IDM_PROJECTSAVEAS:         OnCommand_ProjectSave( HWnd, True )
       Case IDM_PROJECTOPEN:           OnCommand_ProjectOpen( HWnd )
       Case IDM_PROJECTFILESADD:       OnCommand_ProjectFilesAdd( HWnd )
-      Case IDM_PROJECTCLOSE:          OnCommand_ProjectClose( HWnd )
+      Case IDM_PROJECTCLOSE:
+          gConfig.wszLastActiveSession = ""
+          gConfig.SaveConfigFile()
+          OnCommand_ProjectClose( HWnd )
+
       Case IDM_PROJECTOPTIONS:        frmProjectOptions_Show( HWnd, false ) 
       Case IDM_MRUPROJECTCLEAR:       ClearMRUlist( id )
       Case IDM_REMOVEFILEFROMPROJECT: OnCommand_ProjectRemove( id, pDoc )

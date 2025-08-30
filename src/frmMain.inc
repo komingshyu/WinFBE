@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2025 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -167,6 +167,25 @@ end Function
 
 
 ' ========================================================================================
+' Open any Session or Project on editor startup
+' ========================================================================================
+function frmMain_RestoreSessionOrProject() as long
+   ' Only restore session if that option is active. The session file may contain
+   ' a reference to a project if the last session was a project.
+   ' Only restore the session if no files were already opened via the command line.
+   if gTTabCtl.GetItemCount = 0 then
+       if gConfig.RestoreSession then 
+          if AfxFileExists( gConfig.wszLastActiveSession ) then
+             gConfig.LoadSessionFile( gConfig.wszLastActiveSession )
+          end if   
+       end if
+   end if
+    
+   function = 0 
+end function
+
+
+' ========================================================================================
 ' Process any command line that was passed to the editor
 ' ========================================================================================
 function frmMain_ProcessCommandLine( byval HWnd as HWnd ) as long
@@ -183,7 +202,12 @@ function frmMain_ProcessCommandLine( byval HWnd as HWnd ) as long
    ' as of v1.7.4 start to use AfxCommand which is a unicode aware replacement for FB's
    ' built in COMMAND function (that is not unicode compliant).
    
-   if len(AfxCommand(1)) = 0 then exit function
+   if len(AfxCommand(1)) = 0 then 
+       ' no command line files/project specified bu the user may be wanting
+       ' to restore a previous session/project.
+       frmMain_RestoreSessionOrProject()
+       exit function
+   end if
    
    dim wszPath as wstring * MAX_PATH
    dim wszArg  as wstring * MAX_PATH
@@ -203,6 +227,7 @@ function frmMain_ProcessCommandLine( byval HWnd as HWnd ) as long
    end if
    SetForegroundWindow(hwnd)
    
+   dim as long NumCommandLineFiles = 0 
    dim as long i = 1
    Do
       wszArg = AfxCommand(i)
@@ -216,6 +241,7 @@ function frmMain_ProcessCommandLine( byval HWnd as HWnd ) as long
       if len(wszPath) = 0 then wszArg = AfxGetExePathName & wszArg 
        
       if AfxFileExists(wszArg) then
+         NumCommandLineFiles =+ 1
          DataToSend.lpData  = @wszArg
          DataToSend.cbdata  = (len(wszArg)*2) + 1
          SendMessage(hwnd, WM_COPYDATA, len(DataToSend), cast(lParam, @DataToSend))
@@ -223,6 +249,12 @@ function frmMain_ProcessCommandLine( byval HWnd as HWnd ) as long
        
       i += 1
    Loop
+
+   ' If no files or project was loaded from the command line then check if the user 
+   ' had session/project restore option.
+   if NumCommandLineFiles = 0 then
+       frmMain_RestoreSessionOrProject()
+   end if    
 
    function = 0
 end function   
@@ -1271,59 +1303,72 @@ function frmMain_OnActivateApp( _
          ' Has the external file been deleted or is now not available
          if AfxFileExists(pDoc->DiskFilename) = false then
             if pDoc->DeletedButKeep = false then
-               ' Ensure that the file is open and displayed
-               frmMain_OpenFileSafely(HWND_FRMMAIN, _
-                                       false, _    ' bIsNewFile
-                                       false, _    ' bIsTemplate
-                                       true,  _    ' bShowInTab
-                                       false, _    ' bIsInclude
-                                       "", _       ' wszName
-                                       pDoc )      ' pDocIn
-               if MessageBox( HWND_FRMMAIN, _
-                               pDoc->DiskFilename & vbCrLf & _ 
-                               L(286, "This document has been deleted...?"), _
-                               L(267, "File Changed"), MB_ICONQUESTION or MB_YESNO) = IDYES then
-                  ' Keep the file open and simply mark it as dirty so it can be prompted to be saved.
-                  pDoc->UserModified = true                
-               else
-                  ' No. Close the file.
-                  frmMain_OnCommand(HWND_FRMMAIN, IDM_REMOVEFILEFROMPROJECT, 0, 0)
-                  pDocs(idx) = 0
-                  continue do
-               end if
+                ' Ensure that the file is open and displayed
+                frmMain_OpenFileSafely(HWND_FRMMAIN, _
+                                        false, _    ' bIsNewFile
+                                        false, _    ' bIsTemplate
+                                        true,  _    ' bShowInTab
+                                        false, _    ' bIsInclude
+                                        "", _       ' wszName
+                                        pDoc )      ' pDocIn
+                if MessageBox( HWND_FRMMAIN, _
+                                pDoc->DiskFilename & vbCrLf & _ 
+                                L(286, "This document has been deleted or is no longer available. Do you wish to keep the file open in the editor?"), _
+                                L(267, "File Changed"), MB_ICONQUESTION or MB_YESNO) = IDYES then
+                    ' Keep the file open and simply mark it as dirty so it can be prompted to be saved.
+                    pDoc->UserModified = true                
+                else
+                    ' No. Close the file.
+                    if gApp.IsProjectActive then 
+                        OnCommand_ProjectRemove( 0, pDoc )  ' the first param (id) is not used.
+                    else
+                        if OnCommand_FileClose( HWND_FRMMAIN, EFC_CLOSECURRENT ) = false then continue do
+                    end if    
+                    pDocs(idx) = 0
+                    continue do
+                end if
             end if
             pDoc->DeletedButKeep = true
 
          else
-                  
             ' Compare the disk file date time to the value currently
             ' stored in document class.
             ft = AfxGetFileLastWriteTime(pDoc->DiskFilename)
             if AfxFileTimeToVariantTime(ft) <> AfxFileTimeToVariantTime(pDoc->DateFileTime) then
-               OpenSelectedDocument( pDoc->DiskFilename, "" )
-               if MessageBox( HWND_FRMMAIN, _
-                               pDoc->DiskFilename & vbCrLf & _ 
-                               L(266, "File was changed by another application. Reload it?"), _
-                               L(267, "File Changed"), MB_ICONQUESTION or MB_YESNO) = IDYES then
-                  
-                  dim as CWSTR wszFilename = pDoc->DiskFilename
-                  dim as CWSTR wszFileType = pDoc->ProjectFileType
-                  
-                  ' Remove the current file and open the changed file.
-                  frmMain_OnCommand(HWND_FRMMAIN, IDM_REMOVEFILEFROMPROJECT, 0, 0)
-                  
-                  ' Ensure that the file is open and displayed
-                  dim as clsDocument ptr pDocLoad = _
-                  frmMain_OpenFileSafely( HWND_FRMMAIN, _
-                                          false, _    ' bIsNewFile
-                                          false, _    ' bIsTemplate
-                                          true,  _    ' bShowInTab
-                                          false, _    ' bIsInclude
-                                          wszFilename, _ ' wszName
-                                          0 )         ' pDocIn
-                 
-                  pDocLoad->ProjectFileType = wszFileType
-               end if                
+                OpenSelectedDocument( pDoc->DiskFilename, "" )
+                dim as long res = MessageBox( HWND_FRMMAIN, _
+                                pDoc->DiskFilename & vbCrLf & _ 
+                                L(266, "File was changed by another application. Reload it?"), _
+                                L(267, "File Changed"), MB_ICONQUESTION or MB_YESNOCANCEL) 
+                    
+                if res = IDCANCEL then
+                    bInActivateApp = true
+                    exit function
+                end if
+                
+                if res = IDYES then
+                    dim as CWSTR wszFilename = pDoc->DiskFilename
+                    dim as CWSTR wszFileType = pDoc->ProjectFileType
+                    
+                    ' Remove the current file and open the changed file.
+                    if gApp.IsProjectActive then 
+                        OnCommand_ProjectRemove( 0, pDoc )  ' the first param (id) is not used.
+                    else
+                        if OnCommand_FileClose( HWND_FRMMAIN, EFC_CLOSECURRENT ) = false then continue do
+                    end if    
+                    
+                    ' Ensure that the file is open and displayed
+                    dim as clsDocument ptr pDocLoad = _
+                    frmMain_OpenFileSafely( HWND_FRMMAIN, _
+                                            false, _    ' bIsNewFile
+                                            false, _    ' bIsTemplate
+                                            true,  _    ' bShowInTab
+                                            false, _    ' bIsInclude
+                                            wszFilename, _ ' wszName
+                                            0 )         ' pDocIn
+                    
+                    pDocLoad->ProjectFileType = wszFileType
+                end if                
             end if
             pDoc->DateFileTime = AfxGetFileLastWriteTime( pDoc->DiskFilename )
          end if
@@ -1997,14 +2042,6 @@ function frmMain_Show( byval hWndParent as HWnd ) as LRESULT
 
    ' Post a message to process the application's command line as applicable.
    PostMessage( pWindow->hWindow, MSG_USER_PROCESS_COMMANDLINE, 0, 0 )
-
-   ' Only restore session if that option is active. The session file may contain
-   ' a reference to a project if the last session was a project.
-   if gConfig.RestoreSession then 
-      if AfxFileExists( gConfig.wszLastActiveSession ) then
-         gConfig.LoadSessionFile( gConfig.wszLastActiveSession )
-      end if   
-   end if
 
    ' Post a message to process any User Tools that must start after WinFBE displays.
    PostMessage( pWindow->hWindow, MSG_USER_PROCESS_STARTUPUSERTOOLS, 0, 0 )

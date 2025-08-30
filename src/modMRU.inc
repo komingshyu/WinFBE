@@ -1,5 +1,5 @@
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2025 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -59,8 +59,9 @@ public Function updateMRUFilesItems() as long
    dim wszText as WSTRING * 256
    dim as boolean hasMRUfiles = false
    dim as long txtWidth = 0
-   dim as long nMenuWidth = -1
-   
+   dim as long nMenuWidth = 0
+   dim as long padding = AfxScaleX(12)
+
    For i As Long = 0 To 9
       ' If the file no longer exists then remove it from the MRU list
       gConfig.MRU(i) = ProcessFromCurdriveApp( gConfig.MRU(i) )
@@ -82,7 +83,7 @@ public Function updateMRUFilesItems() as long
       setTopMenuMRUItem( getNextFreeMRUindex(), IDM_MRU, IDM_MRUCLEAR, 0, false, false )
    end if   
    
-   function = nMenuWidth
+   function = nMenuWidth + padding
 end function
 
 
@@ -97,7 +98,8 @@ public Function updateMRUProjectFilesItems() as long
    dim wszText as WSTRING * 256
    dim as boolean hasMRUfiles = false
    dim as long txtWidth = 0
-   dim as long nMenuWidth = -1
+   dim as long nMenuWidth = 0
+   dim as long padding = AfxScaleX(12)
 
    For i As Long = 0 To 9
       ' If the file no longer exists then remove it from the MRU list
@@ -120,7 +122,7 @@ public Function updateMRUProjectFilesItems() as long
       setTopMenuMRUItem( getNextFreeMRUindex(), IDM_MRUPROJECT, IDM_MRUPROJECTCLEAR, 0, false, false )
    end if   
    
-   function = nMenuWidth
+   function = nMenuWidth + padding
 end function
 
 

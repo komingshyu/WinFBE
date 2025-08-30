@@ -1,11 +1,11 @@
 ' ========================================================================================
 ' WinFBE
 ' Windows FreeBASIC Editor (Windows 32/64 bit)
-' Paul Squires (2016-2023)
+' Paul Squires (2016-2025)
 ' ========================================================================================
 
 '    WinFBE - Programmer's Code Editor for the FreeBASIC Compiler
-'    Copyright (C) 2016-2023 Paul Squires, PlanetSquires Software
+'    Copyright (C) 2016-2025 Paul Squires, PlanetSquires Software
 '
 '    This program is free software: you can redistribute it and/or modify
 '    it under the terms of the GNU General Public License as published by
@@ -46,11 +46,11 @@ using Afx
 #define APPNAME        wstr("WinFBE - FreeBASIC Editor")
 #define APPNAMESHORT   wstr("WinFBE")
 
-#define APPVERSION     wstr("3.1.0") 
+#define APPVERSION     wstr("3.2.0") 
 #define PREVENT_UPDATE_CHECK FALSE     ' used for betas
 
-#define APPCOPYRIGHT   wstr("Paul Squires, PlanetSquires Software, Copyright (C) 2016-2023") 
-dim shared as CWSTR gwszDefaultToolchain = "FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
+#define APPCOPYRIGHT   wstr("Paul Squires, PlanetSquires Software, Copyright (C) 2016-2025") 
+dim shared as CWSTR gwszDefaultToolchain = "FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
 
 #ifdef __FB_64BIT__
    #define APPBITS wstr(" (64-bit)")

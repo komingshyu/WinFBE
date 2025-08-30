@@ -5,6 +5,12 @@
 
 FreeBASIC Editor for Windows
 
+
+**NOTE: THIS EDITOR WILL SOON BE DEPRECATED AND NO FURTHER UPDATES FORTHCOMING.
+PLEASE USE THE TIKO EDITOR INSTEAD:
+https://github.com/PaulSquires/tiko**
+
+
 Code is written using the FreeBASIC language and uses the Scintilla editing library (in DLL form).
 
 The WinFBE Suite package (attached to each release as a compressed ZIP file), is an all-in-one package including the latest WinFBE editor, FreeBASIC compiler (32 and 64 bit compilers), Jose Roca's WinFBX library, several Help files and all necessary Include files.
@@ -29,7 +35,7 @@ Requirements:
 - Windows Vista or later operating system. Windows XP is not supported because many newer API's are used in the source code.
 - FreeBASIC Compiler http://www.freebasic.net/
 
-**NOTE:** If you get a popup warning message box from the operating system saying that "a DLL is not found and reinstalling the program may fix this problem", then it means that you are missing the Visual C++ redistributable package that is normally available on most Windows 10 and Windows 11 machines. Download and install it from this Microsoft page:  https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170   Here is the direct link to the file: https://aka.ms/vs/17/release/vc_redist.x86.exe  
+**NOTE:** If you get a popup warning message box from the operating system saying that "a DLL is not found and reinstalling the program may fix this problem", then it means that you are missing the Visual C++ redistributable package that is normally available on most Windows 10 and Windows 11 machines. Download and install it from this Microsoft page:  https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170   Here is the direct link to the files: https://aka.ms/vs/17/release/vc_redist.x86.exe and https://aka.ms/vs/17/release/vc_redist.x64.exe
 
 Resources:
 - Jose Roca WinFBX library:[https://github.com/JoseRoca/WinFBX](https://github.com/JoseRoca/WinFBX)
